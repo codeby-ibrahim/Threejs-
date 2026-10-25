@@ -2,39 +2,49 @@
 import './style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
+import GUI from 'lil-gui'
 
 // Scene
 const scene = new THREE.Scene()
-scene.background = new THREE.Color('#101827')
+scene.background = new THREE.Color(0x444444)
 
-// Sphere geometry
-const geometry = new THREE.SphereGeometry(15, 16, 32)
+// Lathe points
+const points = []
 
-// Sphere surface
+for (let i = 0; i < 10; i++) {
+  points.push(
+    new THREE.Vector2(
+      Math.sin(i * 0.2) * 10 + 5,
+      (i - 5) * 2
+    )
+  )
+}
+
+// Geometry
+const geometry = new THREE.LatheGeometry(points, 12)
+
+// Material — Yellow Shape
 const material = new THREE.MeshBasicMaterial({
-  color: '#12618a',
-  transparent: true,
-  opacity: 0.9
+  color: 0x1684b5,
+  side: THREE.DoubleSide,
+  wireframe: false
 })
 
-const sphere = new THREE.Mesh(geometry, material)
-scene.add(sphere)
+// Lathe mesh
+const lathe = new THREE.Mesh(geometry, material)
+scene.add(lathe)
 
-// Triangular wireframe
-const wireGeometry = new THREE.WireframeGeometry(geometry)
-
+// Wireframe
 const wireMaterial = new THREE.LineBasicMaterial({
-  color: '#8be0ff',
-  transparent: true,
-  opacity: 0.8
+  color: 0xb9dce8
 })
 
-const wireframe = new THREE.LineSegments(
-  wireGeometry,
+let wireframe = new THREE.LineSegments(
+  new THREE.WireframeGeometry(geometry),
   wireMaterial
 )
 
-sphere.add(wireframe)
+lathe.add(wireframe)
 
 // Camera
 const camera = new THREE.PerspectiveCamera(
@@ -44,28 +54,75 @@ const camera = new THREE.PerspectiveCamera(
   1000
 )
 
-camera.position.set(0, 0, 48)
+camera.position.set(0, 5, 45)
+camera.lookAt(0, 0, 0)
 
 // Renderer
 const canvas = document.querySelector('#webgl')
 
 const renderer = new THREE.WebGLRenderer({
   canvas,
-  antialias: true,
-  alpha: false
+  antialias: true
 })
 
 renderer.setSize(window.innerWidth, window.innerHeight)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
-// Mouse controls
+// Orbit Controls
 const controls = new OrbitControls(camera, renderer.domElement)
 
 controls.enableDamping = true
 controls.dampingFactor = 0.05
 controls.enablePan = false
-controls.minDistance = 20
-controls.maxDistance = 100
+
+// GUI
+const gui = new GUI({ title: 'Controls' })
+
+const settings = {
+  segments: 12,
+  phiStart: 0,
+  phiLength: Math.PI * 2
+}
+
+// Update geometry
+function updateGeometry() {
+  const newGeometry = new THREE.LatheGeometry(
+    points,
+    settings.segments,
+    settings.phiStart,
+    settings.phiLength
+  )
+
+  // Remove and dispose old wireframe
+  lathe.remove(wireframe)
+  wireframe.geometry.dispose()
+
+  // Replace old lathe geometry
+  lathe.geometry.dispose()
+  lathe.geometry = newGeometry
+
+  // Create new wireframe
+  wireframe = new THREE.LineSegments(
+    new THREE.WireframeGeometry(newGeometry),
+    wireMaterial
+  )
+
+  lathe.add(wireframe)
+}
+
+// GUI controls
+const folder = gui.addFolder('THREE.LatheGeometry')
+
+folder.add(settings, 'segments', 3, 64, 1)
+  .onChange(updateGeometry)
+
+folder.add(settings, 'phiStart', 0, Math.PI * 2, 0.01)
+  .onChange(updateGeometry)
+
+folder.add(settings, 'phiLength', 0.1, Math.PI * 2, 0.01)
+  .onChange(updateGeometry)
+
+folder.open()
 
 // Animation
 const clock = new THREE.Clock()
@@ -75,8 +132,7 @@ function animate() {
 
   const delta = clock.getDelta()
 
-  sphere.rotation.y += delta * 0.15
-  sphere.rotation.x += delta * 0.06
+  lathe.rotation.y += delta * 0.3
 
   controls.update()
   renderer.render(scene, camera)
@@ -84,7 +140,7 @@ function animate() {
 
 animate()
 
-// Responsive design
+// Responsive resize
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight
   camera.updateProjectionMatrix()
