@@ -1,6 +1,7 @@
 * {
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
 }
 
 html,
@@ -8,10 +9,22 @@ body {
   width: 100%;
   height: 100%;
   overflow: hidden;
+  background: #444;
 }
 
 #webgl {
   display: block;
   width: 100%;
   height: 100%;
+  outline: none;
+}
+
+.lil-gui {
+  --width: 280px;
+  --background-color: #252525;
+  --text-color: #eeeeee;
+  --title-background-color: #111111;
+  --widget-color: #424242;
+  --hover-color: #555555;
+  --font-size: 11px;
 }

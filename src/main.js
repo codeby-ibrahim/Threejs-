@@ -5,69 +5,90 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 
 // Scene
 const scene = new THREE.Scene()
+scene.background = new THREE.Color('#101827')
 
-// Timer
-const timer = new THREE.Timer()
+// Sphere geometry
+const geometry = new THREE.SphereGeometry(15, 16, 32)
 
-// Geometry
-const geometry = new THREE.BoxGeometry(4, 4, 4)
-
-// Material
+// Sphere surface
 const material = new THREE.MeshBasicMaterial({
-  color: 0xff0000
+  color: '#12618a',
+  transparent: true,
+  opacity: 0.9
 })
 
-// Mesh
-const cube = new THREE.Mesh(geometry, material)
-scene.add(cube)
+const sphere = new THREE.Mesh(geometry, material)
+scene.add(sphere)
+
+// Triangular wireframe
+const wireGeometry = new THREE.WireframeGeometry(geometry)
+
+const wireMaterial = new THREE.LineBasicMaterial({
+  color: '#8be0ff',
+  transparent: true,
+  opacity: 0.8
+})
+
+const wireframe = new THREE.LineSegments(
+  wireGeometry,
+  wireMaterial
+)
+
+sphere.add(wireframe)
 
 // Camera
 const camera = new THREE.PerspectiveCamera(
-  75,
+  45,
   window.innerWidth / window.innerHeight,
   0.1,
   1000
 )
 
-camera.position.set(0, 20, 100)
+camera.position.set(0, 0, 48)
 
 // Renderer
 const canvas = document.querySelector('#webgl')
-const renderer = new THREE.WebGLRenderer({ canvas })
+
+const renderer = new THREE.WebGLRenderer({
+  canvas,
+  antialias: true,
+  alpha: false
+})
 
 renderer.setSize(window.innerWidth, window.innerHeight)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
-// OrbitControls
+// Mouse controls
 const controls = new OrbitControls(camera, renderer.domElement)
 
 controls.enableDamping = true
-controls.update()
+controls.dampingFactor = 0.05
+controls.enablePan = false
+controls.minDistance = 20
+controls.maxDistance = 100
 
 // Animation
+const clock = new THREE.Clock()
+
 function animate() {
   requestAnimationFrame(animate)
 
-  timer.update()
-  const delta = timer.getDelta()
+  const delta = clock.getDelta()
 
-  // Cube rotation
-  cube.rotation.x += delta * 0.12
-  cube.rotation.y += delta * 0.12
+  sphere.rotation.y += delta * 0.15
+  sphere.rotation.x += delta * 0.06
 
-  // Update controls
   controls.update()
-
-  // Render scene
   renderer.render(scene, camera)
 }
 
 animate()
 
-// Responsive resize
+// Responsive design
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight
   camera.updateProjectionMatrix()
 
   renderer.setSize(window.innerWidth, window.innerHeight)
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 })
